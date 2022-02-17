@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks/client",
-  "version": "0.14.0",
+  "name": "@databutton/liveblocks-client",
+  "version": "0.14.0-ws-polyfill",
   "description": "",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",

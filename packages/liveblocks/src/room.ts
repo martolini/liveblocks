@@ -171,13 +171,15 @@ type Context = {
   liveblocksServer: string;
   throttleDelay: number;
   publicApiKey?: string;
+  WebSocketPolyfill: typeof WebSocket
 };
 
 export function makeStateMachine(
   state: State,
   context: Context,
-  mockedEffects?: Effects
+  mockedEffects?: Effects,
 ) {
+  context.WebSocketPolyfill = context.WebSocketPolyfill ? context.WebSocketPolyfill : window.WebSocket;
   const effects: Effects = mockedEffects || {
     async authenticate() {
       try {
@@ -187,7 +189,7 @@ export function makeStateMachine(
           context.publicApiKey
         );
         const parsedToken = parseToken(token);
-        const socket = new WebSocket(
+        const socket = new context.WebSocketPolyfill!(
           `${context.liveblocksServer}/?token=${token}`
         );
         socket.addEventListener("message", onMessage);
@@ -685,10 +687,6 @@ See v0.13 release notes for more information.
   }
 
   function connect() {
-    if (typeof window === "undefined") {
-      return;
-    }
-
     if (
       state.connection.state !== "closed" &&
       state.connection.state !== "unavailable"
@@ -1013,7 +1011,7 @@ See v0.13 release notes for more information.
     clearTimeout(state.timeoutHandles.pongTimeout);
     state.timeoutHandles.pongTimeout = effects.schedulePongTimeout();
 
-    if (state.socket.readyState === WebSocket.OPEN) {
+    if (state.socket.readyState === state.socket.OPEN) {
       state.socket.send("ping");
     }
   }
@@ -1073,7 +1071,7 @@ See v0.13 release notes for more information.
       });
     }
 
-    if (state.socket == null || state.socket.readyState !== WebSocket.OPEN) {
+    if (state.socket == null || state.socket.readyState !== state.socket.OPEN) {
       state.buffer.storageOperations = [];
       return;
     }
@@ -1439,6 +1437,7 @@ export function createRoom(
   options: ClientOptions & {
     defaultPresence?: Presence;
     defaultStorageRoot?: Record<string, any>;
+    WebSocketPolyfill: typeof WebSocket;
   }
 ): InternalRoom {
   const throttleDelay = options.throttle || 100;
@@ -1467,6 +1466,7 @@ export function createRoom(
     authEndpoint,
     room: name,
     publicApiKey: options.publicApiKey,
+    WebSocketPolyfill: options.WebSocketPolyfill
   });
 
   const room: Room = {
