@@ -177,8 +177,9 @@ type Context = {
 export function makeStateMachine(
   state: State,
   context: Context,
-  mockedEffects?: Effects
+  mockedEffects?: Effects,
 ) {
+  context.WebSocketPolyfill = context.WebSocketPolyfill ? context.WebSocketPolyfill : window.WebSocket;
   const effects: Effects = mockedEffects || {
     async authenticate() {
       try {
